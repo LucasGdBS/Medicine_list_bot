@@ -55,7 +55,8 @@ class BuscaMed:
 
                 if (remedio.name.lower() in nome_produto.lower() and\
                 str(remedio.mg) in nome_produto.lower() and\
-                (remedio.pills is None or str(remedio.pills) in nome_produto.lower())):
+                (remedio.pills is None or f'{remedio.pills} comprimidos' in nome_produto.lower() or\
+                 f'{remedio.pills} cápsulas' in nome_produto.lower())):
                     
                     price = item.find('div', class_='paguemenos-store-theme-2-x-price').text
                     price = price.replace('\xa0', ' ').strip()
@@ -101,7 +102,8 @@ class BuscaMed:
 
                 if (nome_produto and titulo_produto and remedio.name.lower() in nome_produto.lower() and\
                 f'{remedio.mg}mg' in titulo_produto.lower() and\
-                (remedio.pills is None or str(remedio.pills) in titulo_produto.lower())):
+                (remedio.pills is None or f'{remedio.pills} comprimidos' in titulo_produto.lower() or\
+                f'{remedio.pills} cápsulas' in titulo_produto.lower())):
                     
                     preco = item.find('div', attrs={'data-qa': 'price_final_item'})
                     preco = f'{preco.text.strip() if preco else 'Não consta'}'
@@ -117,12 +119,33 @@ class BuscaMed:
         
         return self.lista_remedios_drogasil
 
-    
+
+
+
 buscaMed = BuscaMed()
 remedios = ExcelHandler.load_from_excel('remedios.xlsx')
-buscaMed.set_remedios(remedios[0:1])
+buscaMed.set_remedios(remedios[0:2])
 drogasil = buscaMed.get_remedios_drogasil()
 paguemen = buscaMed.get_remedios_pague_menos()
 
-medicamentos_drogasil = [med for sublist in drogasil.values() for med in sublist]
-medicamentos_paguemenos = [med for sublist in paguemen.values() for med in sublist]
+# medicamentos_drogasil = [med for sublist in drogasil.values() for med in sublist]
+# medicamentos_paguemenos = [med for sublist in paguemen.values() for med in sublist]
+
+print(drogasil)
+print(paguemen)
+
+remedios_mais_baratos_drogasil = {}
+remedios_mais_baratos_paguemenos = {}
+
+for tipo, lista in drogasil.items():
+    remedio_mais_barato = min(lista, key=lambda x: x.price)
+    remedios_mais_baratos_drogasil[tipo] = remedio_mais_barato
+
+for tipo, lista in paguemen.items():
+    remedio_mais_barato = min(lista, key=lambda x: x.price)
+    remedios_mais_baratos_paguemenos[tipo] = remedio_mais_barato
+
+print(remedios_mais_baratos_drogasil)
+print(remedios_mais_baratos_paguemenos)
+
+ExcelHandler.write_to_excel('remedios.xlsx', remedios_mais_baratos_drogasil, remedios_mais_baratos_paguemenos)
