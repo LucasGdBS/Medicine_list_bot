@@ -14,7 +14,7 @@ class BuscaMed:
         self.url_drogasil = 'https://www.drogasil.com.br/search?w='
         self.url_pague_menos = 'https://www.paguemenos.com.br/busca?termo='
         self.lista_remedios = []
-        self.lista_remedios_pagmen = []
+        self.lista_remedios_pagmen = {}
         self.lista_remedios_drogasil = {}
 
     def __init_driver(self):
@@ -36,6 +36,9 @@ class BuscaMed:
             self.driver.implicitly_wait(2)
             html = self.driver.page_source
 
+            # Seta o dicionario
+            self.lista_remedios_pagmen.update({remedio: []})
+
             # Converte o html para um objeto BeautifulSoup
             soup = bs(html, 'html.parser')
 
@@ -48,7 +51,7 @@ class BuscaMed:
                 if remedio.lower() in nome_produto.lower():
                     preco = item.find('div', class_='paguemenos-store-theme-2-x-price').text
                     preco = preco.replace('\xa0', ' ').strip()
-                    self.lista_remedios_pagmen.append({'Nome': nome_produto, 'Preço': preco})
+                    self.lista_remedios_pagmen[remedio].append({'Nome': nome_produto, 'Preço': preco})
 
             self.driver.quit()
 
@@ -95,7 +98,7 @@ buscaMed = BuscaMed()
 buscaMed.set_remedios(['dual'])
 
 buscaMed.get_remedios_drogasil()
-# buscaMed.get_remedios_pague_menos()
+buscaMed.get_remedios_pague_menos()
     
 
     
