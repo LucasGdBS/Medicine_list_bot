@@ -1,7 +1,6 @@
 import pandas as pd
-from typing import List
 from models import Medicine
-from openpyxl import Workbook, load_workbook
+from openpyxl import load_workbook
 
 class ExcelHandler:
     @staticmethod
