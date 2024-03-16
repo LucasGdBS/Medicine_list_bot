@@ -15,7 +15,7 @@ class BuscaMed:
         self.url_pague_menos = 'https://www.paguemenos.com.br/busca?termo='
         self.lista_remedios = []
         self.lista_remedios_pagmen = []
-        self.lista_remedios_drogasil = []
+        self.lista_remedios_drogasil = {}
 
     def __init_driver(self):
         self.driver = webdriver.Chrome(options=self.chrome_options)  
@@ -55,15 +55,46 @@ class BuscaMed:
         print(self.lista_remedios_pagmen)
     
     def get_remedios_drogasil(self):
-        pass
+        
+        for remedio in self.lista_remedios:
+            self.__init_driver()
+
+            # Acessa o site
+            self.driver.get(self.url_drogasil + self.__parse_string_to_url(remedio))
+            self.driver.implicitly_wait(2)
+            html = self.driver.page_source
+
+            # Seta o dicionario
+            self.lista_remedios_drogasil.update({remedio: []})
+
+            # Converte o html para um objeto BeautifulSoup
+            soup = bs(html, 'html.parser')
+
+            # Procura os produtos
+            produtos = soup.find_all('div', class_='ProductCardstyles__ProductCardStyle-iu9am6-6')
+
+            # Procura o nome e o preço dos produtos
+            for item in produtos:
+                nome_produto = soup.find('a', class_='LinkNextstyles__LinkNextStyles-t73o01-0 cpRdBZ LinkNext', attrs={'data-qa': 'caroussel_item_btn_buy'})
+                nome_produto = nome_produto.get('title') if nome_produto else None
+
+                if nome_produto and remedio.lower() in nome_produto.lower():
+                    preco = item.find('div', class_='Pricestyles__ProductPriceStyles-sc-118x8ec-0')
+                    preco = f'R$ {preco.text.strip() if preco else 'Não consta'}'
+                    self.lista_remedios_drogasil[remedio].append({'Nome': nome_produto, 'Preço': preco})
+            
+            self.driver.quit()
+        
+        print(self.lista_remedios_drogasil)
+
 
             
             
     
 buscaMed = BuscaMed()
-buscaMed.set_remedios(['dual 30mg'])
+buscaMed.set_remedios(['dual'])
 
-# buscaMed.get_remedios_drogasil()
+buscaMed.get_remedios_drogasil()
 # buscaMed.get_remedios_pague_menos()
     
 
