@@ -2,16 +2,20 @@ import json
 
 class Medicine:
     '''Classe que representa um medicamento, com nome, quantidade de comprimidos, miligramas, link e preço.'''
-    def __init__(self, name, pills, mg, link=None, price:float=0.0):
+    def __init__(self, name:str, mg:float, pills:int='', price:float=0.0, link: str=None):
         self.name = name
-        self.pills = pills
         self.mg = mg
+        self.pills = pills
         self.price = price
         self.link = link
     
     def __str__(self) -> str:
         '''Retorna uma string com os atributos da classe Medicine'''
-        return f'Nome: {self.name} {self.mg}mg {self.pills} comprimidos, Preço: {self.price}'
+        return f'{self.name} {self.mg}mg {self.pills}'
+    
+    def __repr__(self) -> str:
+        '''Retorna uma string com os atributos da classe Medicine'''
+        return f'{self.name} {self.mg}mg {self.pills} {self.price} {self.link}'
     
     def to_json(self):
         '''Retorna um json com os atributos da classe Medicine'''
