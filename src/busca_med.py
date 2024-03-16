@@ -34,7 +34,6 @@ class BuscaMed:
 
             # Acessa o site
             self.driver.get(f'{self.url_pague_menos}{self.__parse_string_to_url(remedio, '%20')}')
-            print(f'{self.url_pague_menos}{self.__parse_string_to_url(remedio, '%20')}')
             self.driver.implicitly_wait(2)
             html = self.driver.page_source
 
@@ -75,12 +74,12 @@ class BuscaMed:
             self.__init_driver()
 
             # Acessa o site
-            self.driver.get(self.url_drogasil + self.__parse_string_to_url(remedio))
+            self.driver.get(f'{self.url_drogasil}{self.__parse_string_to_url(remedio)}')
             self.driver.implicitly_wait(2)
             html = self.driver.page_source
 
             # Seta o dicionario
-            self.lista_remedios_drogasil.update({remedio: []})
+            self.lista_remedios_drogasil.update({remedio.name: []})
 
             # Converte o html para um objeto BeautifulSoup
             soup = bs(html, 'html.parser')
@@ -90,13 +89,22 @@ class BuscaMed:
 
             # Procura o nome e o preço dos produtos
             for item in produtos:
-                nome_produto = soup.find('a', class_='LinkNextstyles__LinkNextStyles-t73o01-0 cpRdBZ LinkNext', attrs={'data-qa': 'caroussel_item_btn_buy'})
-                nome_produto = nome_produto.get('title') if nome_produto else None
+                produto = soup.find('a', class_='LinkNextstyles__LinkNextStyles-t73o01-0 cpRdBZ LinkNext', attrs={'data-qa': 'caroussel_item_btn_buy'})
 
-                if nome_produto and remedio.lower() in nome_produto.lower():
+                link_produto = produto.get('href') if produto else None
+                nome_produto = produto.get('title') if produto else None
+
+                if (nome_produto and remedio.name.lower() in nome_produto.lower() and\
+                str(remedio.mg) in nome_produto.lower() and\
+                (str(remedio.pills) is None or str(remedio.pills) in nome_produto.lower())):
+                    
                     preco = item.find('div', class_='Pricestyles__ProductPriceStyles-sc-118x8ec-0')
-                    preco = f'R$ {preco.text.strip() if preco else 'Não consta'}'
-                    self.lista_remedios_drogasil[remedio].append({'Nome': nome_produto, 'Preço': preco})
+                    preco = f'{preco.text.strip() if preco else 'Não consta'}'
+
+                    remedio.price = preco
+                    remedio.link = f'https://www.drogasil.com.br{link_produto}'
+
+                    self.lista_remedios_drogasil[remedio.name].append(remedio)
             
             self.driver.quit()
         
@@ -107,11 +115,9 @@ class BuscaMed:
             
     
 buscaMed = BuscaMed()
-buscaMed.set_remedios([Medicine('sustrate', 10)])
-# buscaMed.get_remedios_drogasil()
+buscaMed.set_remedios([Medicine('sustrate', 10, 30), Medicine('insit', 75, 60)])
+buscaMed.get_remedios_drogasil()
 buscaMed.get_remedios_pague_menos()
-
-# Medicine('insit', 75, 60)
     
 
     
