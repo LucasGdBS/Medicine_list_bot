@@ -1,6 +1,7 @@
-import requests
+from typing import List
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
+from models import Medicine
 
 class BuscaMed:
     def __init__(self):
@@ -13,18 +14,18 @@ class BuscaMed:
 
         self.url_drogasil = 'https://www.drogasil.com.br/search?w='
         self.url_pague_menos = 'https://www.paguemenos.com.br/busca?termo='
-        self.lista_remedios = []
+        self.lista_remedios = List[Medicine]
         self.lista_remedios_pagmen = {}
         self.lista_remedios_drogasil = {}
 
     def __init_driver(self):
         self.driver = webdriver.Chrome(options=self.chrome_options)  
     
-    def set_remedios(self, lista_remedios: list):
+    def set_remedios(self, lista_remedios: List[Medicine]):
         self.lista_remedios = lista_remedios
     
-    def __parse_string_to_url(self, string: str, replace: str = '+'):
-        return string.replace(' ', replace).upper()
+    def __parse_string_to_url(self, medicine: Medicine, replace: str = '+'):
+        return str(medicine).replace(' ', replace)
 
     def get_remedios_pague_menos(self):
 
@@ -32,12 +33,13 @@ class BuscaMed:
             self.__init_driver()
 
             # Acessa o site
-            self.driver.get(self.url_pague_menos + self.__parse_string_to_url(remedio, '%20'))
+            self.driver.get(f'{self.url_pague_menos}{self.__parse_string_to_url(remedio, '%20')}')
+            print(f'{self.url_pague_menos}{self.__parse_string_to_url(remedio, '%20')}')
             self.driver.implicitly_wait(2)
             html = self.driver.page_source
 
             # Seta o dicionario
-            self.lista_remedios_pagmen.update({remedio: []})
+            self.lista_remedios_pagmen.update({remedio.name: []})
 
             # Converte o html para um objeto BeautifulSoup
             soup = bs(html, 'html.parser')
@@ -47,11 +49,21 @@ class BuscaMed:
 
             # Procura o nome e o preço dos produtos
             for item in produtos:
+                link_produto = item.find('a', class_='paguemenos-store-theme-2-x-search-custom-button').get('href')
                 nome_produto = item.find('span', class_='paguemenos-store-theme-2-x-search-custom-products-name-span').text
-                if remedio.lower() in nome_produto.lower():
-                    preco = item.find('div', class_='paguemenos-store-theme-2-x-price').text
-                    preco = preco.replace('\xa0', ' ').strip()
-                    self.lista_remedios_pagmen[remedio].append({'Nome': nome_produto, 'Preço': preco})
+                                    
+
+                if (remedio.name.lower() in nome_produto.lower() and\
+                str(remedio.mg) in nome_produto.lower() and\
+                (str(remedio.pills) is None or str(remedio.pills) in nome_produto.lower())):
+                    
+                    price = item.find('div', class_='paguemenos-store-theme-2-x-price').text
+                    price = price.replace('\xa0', ' ').strip()
+
+                    remedio.price = price
+                    remedio.link = f'https://www.paguemenos.com.br{link_produto}'
+
+                    self.lista_remedios_pagmen[remedio.name].append(remedio)
 
             self.driver.quit()
 
@@ -95,10 +107,11 @@ class BuscaMed:
             
     
 buscaMed = BuscaMed()
-buscaMed.set_remedios(['dual'])
-
-buscaMed.get_remedios_drogasil()
+buscaMed.set_remedios([Medicine('sustrate', 10)])
+# buscaMed.get_remedios_drogasil()
 buscaMed.get_remedios_pague_menos()
+
+# Medicine('insit', 75, 60)
     
 
     
