@@ -2,6 +2,7 @@ from typing import List
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 from models import Medicine
+from excel_handler import ExcelHandler
 
 class BuscaMed:
     def __init__(self):
@@ -92,15 +93,17 @@ class BuscaMed:
             # Procura o nome e o preço dos produtos
             for item in produtos:
                 produto = item.find('a', class_='LinkNextstyles__LinkNextStyles-t73o01-0 cpRdBZ LinkNext', attrs={'data-qa': 'caroussel_item_btn_buy'})
+                nome_produto = item.find('div', class_='product-brand')
 
+                nome_produto = nome_produto.text.strip() if nome_produto else None
                 link_produto = produto.get('href') if produto else None
-                nome_produto = produto.get('title') if produto else None
+                titulo_produto = produto.get('title') if produto else None
 
-                if (nome_produto and remedio.name.lower() in nome_produto.lower() and\
-                str(remedio.mg) in nome_produto.lower() and\
-                (remedio.pills is None or str(remedio.pills) in nome_produto.lower())):
+                if (nome_produto and titulo_produto and remedio.name.lower() in nome_produto.lower() and\
+                f'{remedio.mg}mg' in titulo_produto.lower() and\
+                (remedio.pills is None or str(remedio.pills) in titulo_produto.lower())):
                     
-                    preco = item.find('div', class_='Pricestyles__ProductPriceStyles-sc-118x8ec-0')
+                    preco = item.find('div', attrs={'data-qa': 'price_final_item'})
                     preco = f'{preco.text.strip() if preco else 'Não consta'}'
 
                     remedio.price = preco
@@ -114,14 +117,12 @@ class BuscaMed:
         
         return self.lista_remedios_drogasil
 
-
-            
-            
     
 buscaMed = BuscaMed()
-buscaMed.set_remedios([Medicine('sustrate', 10, 30), Medicine('insit', 75, 60)])
+remedios = ExcelHandler.load_from_excel('remedios.xlsx')
+buscaMed.set_remedios(remedios[0:1])
 drogasil = buscaMed.get_remedios_drogasil()
 paguemen = buscaMed.get_remedios_pague_menos()
 
-print(drogasil)
-print(paguemen)
+medicamentos_drogasil = [med for sublist in drogasil.values() for med in sublist]
+medicamentos_paguemenos = [med for sublist in paguemen.values() for med in sublist]

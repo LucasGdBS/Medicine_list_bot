@@ -2,7 +2,7 @@ import json
 
 class Medicine:
     '''Classe que representa um medicamento, com nome, quantidade de comprimidos, miligramas, link e preço.'''
-    def __init__(self, name:str, mg:float, pills:int='', price:float=0.0, link: str=None):
+    def __init__(self, name:str, mg:float, pills:int=None, price:float=0.0, link: str=None):
         self.name = name
         self.mg = mg
         self.pills = pills
